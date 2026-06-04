@@ -80,8 +80,8 @@ export function SalonCard({ store, onClick, onParentSalonClick }: SalonCardProps
       )}
 
       <div className="p-3 flex flex-col flex-1">
-        <div className="flex items-start justify-between mb-1">
-          <h3 className="font-serif text-base">@{store.ig_username}</h3>
+        <div className="flex items-start justify-between mb-2">
+          <h3 className="font-serif text-lg sm:text-xl font-semibold">@{store.ig_username}</h3>
           <Bookmark className="w-4 h-4 text-muted-foreground flex-shrink-0" />
         </div>
 
@@ -162,7 +162,7 @@ export function SalonCardList({ store, onClick, onParentSalonClick }: SalonCardP
       className="cursor-pointer border-b border-[#EAEAEA] py-3 hover:bg-secondary/30 active:bg-secondary/50 transition-colors"
     >
       <div className="flex items-center gap-2">
-        <h3 className="font-serif text-sm flex-shrink-0 min-w-[100px]">
+        <h3 className="font-serif text-sm font-semibold flex-shrink-0 min-w-[100px]">
           @{store.ig_username}
         </h3>
         <span className="text-xs text-muted-foreground flex-shrink-0 px-2 py-0.5 bg-secondary rounded">
@@ -184,7 +184,7 @@ export function SalonCardList({ store, onClick, onParentSalonClick }: SalonCardP
                 {store.top_tags.map((tag, idx) => (
                   <span
                     key={tag}
-                    className={`px-1 py-0.5 text-[10px] rounded-full border ${
+                    className={`px-1 py-0.5 text-xs rounded-full border ${
                       idx === 0 ? 'bg-foreground/10 border-foreground/30 text-foreground' : 'bg-secondary border-border text-muted-foreground'
                     }`}
                   >
@@ -296,7 +296,7 @@ export function SalonCardGrid({ store, onClick, onParentSalonClick }: SalonCardP
                 store.top_tags.slice(0, 2).map((tag, idx) => (
                   <span
                     key={tag}
-                    className={`px-1 py-0.5 text-[8px] rounded-full border ${
+                    className={`px-1 py-0.5 text-xs rounded-full border ${
                       idx === 0 ? 'bg-foreground/10 border-foreground/30 text-foreground' : 'bg-secondary border-border text-muted-foreground'
                     }`}
                   >
@@ -317,6 +317,16 @@ export function SalonCardGrid({ store, onClick, onParentSalonClick }: SalonCardP
     </article>
   );
 }
+
+/* ========================================
+   Helper: Format review date
+======================================== */
+
+const formatReviewDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
+};
 
 /* ========================================
    REVIEW CARD
@@ -420,7 +430,7 @@ export function ReviewCard({ review, onDelete, onEdit, onReply, replies, parentR
                 <span className="bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full">💬 路透線報</span>
               )}
               <span className="text-xs text-muted-foreground">
-                · {review.created_at}
+                · {formatReviewDate(review.created_at)}
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground/70 mt-0.5">
@@ -1590,8 +1600,9 @@ export function DetailView({
 
           {/* 右側：超大專長比例圓圈 */}
           {store.specialties.length > 0 && (
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <div className="relative w-[80px] h-[80px] flex-shrink-0">
+            <div className="flex flex-col items-center gap-1 flex-shrink-0">
+              {/* 超大圆饼图 */}
+              <div className="relative w-[90px] h-[90px] flex-shrink-0">
                 <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
                   <circle cx="18" cy="18" r="15.9" fill="none" stroke="currentColor" strokeWidth="2.5"
                     className="text-border" />
@@ -1599,16 +1610,13 @@ export function DetailView({
                     strokeDasharray={`${store.specialties[0].percentage}, 100`}
                     className="text-foreground" strokeLinecap="round" />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-sm font-serif font-medium">
+                <span className="absolute inset-0 flex items-center justify-center text-2xl font-bold">
                   {store.specialties[0].percentage}%
                 </span>
               </div>
-              <div className="text-xs text-muted-foreground leading-tight text-left">
-                <span className="font-medium text-foreground">{store.specialties[0].percentage}%</span>
-                <br />
-                <span>專長比例</span>
-                <br />
-                <span className="text-xs text-muted-foreground/60">{store.specialties[0].name}</span>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground leading-tight">專長比例</p>
+                <p className="text-sm font-medium text-foreground">{store.specialties[0].name}</p>
               </div>
             </div>
           )}
