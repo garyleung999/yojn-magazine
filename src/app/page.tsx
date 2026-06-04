@@ -664,32 +664,34 @@ function HomeView({
         />
 
         {/* Sort Dropdown + Results Count + View Switcher */}
-        <div className="flex items-center justify-between mb-4">
-          {/* Sort Dropdown */}
-          <div className="relative">
-            <select
-              value={selectedSort}
-              onChange={(e) => setSelectedSort(e.target.value)}
-              className="appearance-none bg-transparent border border-border rounded-lg px-2.5 py-1.5 pr-7 text-[12px] font-serif text-muted-foreground focus:outline-none focus:border-foreground transition-colors cursor-pointer"
-            >
-              <option value="🏆 推薦排序">🏆 推薦排序</option>
-              <option value="👣 人氣排序">👣 人氣排序</option>
-              <option value="💰 價格低→高">💰 價格低→高</option>
-              <option value="💎 價格高→低">💎 價格高→低</option>
-              <option value="🆕 最新進駐">🆕 最新進駐</option>
-            </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
+        <div className="flex flex-wrap items-center justify-between mb-4 gap-y-2">
+          <div className="flex items-center gap-2">
+            {/* Sort Dropdown */}
+            <div className="relative">
+              <select
+                value={selectedSort}
+                onChange={(e) => setSelectedSort(e.target.value)}
+                className="appearance-none bg-transparent border border-border rounded-lg px-2.5 py-1.5 pr-7 text-xs font-serif text-muted-foreground focus:outline-none focus:border-foreground transition-colors cursor-pointer"
+              >
+                <option value="🏆 推薦排序">🏆 推薦排序</option>
+                <option value="👣 人氣排序">👣 人氣排序</option>
+                <option value="💰 價格低→高">💰 價格低→高</option>
+                <option value="💎 價格高→低">💎 價格高→低</option>
+                <option value="🆕 最新進駐">🆕 最新進駐</option>
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
+            </div>
+            <p className="text-xs text-muted-foreground whitespace-nowrap">
+              找到{" "}
+              <span className="text-foreground font-medium">
+                {stores.length}
+              </span>{" "}
+              間符合條件的神店
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground">
-            找到{" "}
-            <span className="text-foreground font-medium">
-              {stores.length}
-            </span>{" "}
-            間符合條件的神店
-          </p>
 
           {/* View Switcher Button Group */}
-          <div className="flex items-center border border-border rounded-lg overflow-hidden bg-card text-[10px]">
+          <div className="flex items-center border border-border rounded-lg overflow-hidden bg-card text-xs">
             <button
               onClick={() => setViewMode("list")}
               className={`flex items-center gap-1 px-2.5 py-1.5 transition-all ${
