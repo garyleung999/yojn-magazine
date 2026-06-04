@@ -27,9 +27,11 @@ import {
   Loader2,
   ShieldCheck,
   Store as StoreIcon,
+  Pencil,
 } from "lucide-react";
 import ImageLightbox from "@/components/ImageLightbox";
 import ImageUploadModal from "@/components/ImageUploadModal";
+import StoreEditModal from "@/components/StoreEditModal";
 
 /* ========================================
    Helper: Format price display
@@ -882,6 +884,7 @@ export function DetailView({
   const [localMenuUpdatedAt, setLocalMenuUpdatedAt] = useState<string | undefined>(store.menu_updated_at);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [showEditStore, setShowEditStore] = useState(false);
   const { isAuthenticated, user } = useAuth();
 
   useEffect(() => { setLocalReviews(reviews); }, [reviews]);
@@ -1502,6 +1505,11 @@ export function DetailView({
                   官方
                 </span>
               )}
+              {isAuthenticated && (
+                <button onClick={() => setShowEditStore(true)} className="ml-1 p-1 hover:bg-secondary rounded-full">
+                  <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              )}
             </div>
             <button
               onClick={() => onInstagramClick(store.ig_username)}
@@ -1695,12 +1703,12 @@ export function DetailView({
             <AddTagInput onAdd={handleAddCustomTag} isAuthenticated={isAuthenticated} onAuthRequired={() => { setAuthModalMessage("登入後即可新增標籤"); setShowAuthModal(true); }} />
 
             {/* 所有技術標籤 — 全面展開 */}
-            <div className="border-t border-border/50 pt-3 mt-2">
+            <div className="border-t border-border/50 pt-1 mt-1">
               {TAG_GROUPS.map(group => (
-                <div key={group.id} className="mb-3">
+                <div key={group.id} className="mb-1">
                   <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">{group.title}</p>
                   {group.categories.map(cat => (
-                    <div key={cat.name} className="mb-2">
+                    <div key={cat.name} className="mb-1">
                       <p className="text-xs text-muted-foreground/80 mb-1">{cat.name}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {cat.tags.map(tag => {
@@ -1710,7 +1718,7 @@ export function DetailView({
                             <button
                               key={tag}
                               onClick={() => toggleTagVote(tag)}
-                              className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-full border transition-all active:scale-95 ${
+                              className={`inline-flex items-center px-2 py-1 text-sm rounded-full border transition-all active:scale-95 ${
                                 hasVotes ? "bg-foreground/10 border-foreground/30 text-foreground" : "bg-card border-border text-muted-foreground/60 hover:border-muted-foreground"
                               } ${data.isVoted ? "ring-1 ring-foreground/20" : ""}`}
                             >
@@ -1926,6 +1934,17 @@ export function DetailView({
           onClose={() => setLightboxOpen(false)}
           currentUserId={user?.id}
           onDelete={handleLightboxDelete}
+        />
+      )}
+
+      {showEditStore && (
+        <StoreEditModal
+          store={store}
+          onClose={() => setShowEditStore(false)}
+          onUpdate={(updatedStore) => {
+            setLocalStore(updatedStore);
+            setPendingStoreUpdate(updatedStore);
+          }}
         />
       )}
     </div>

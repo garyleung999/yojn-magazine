@@ -309,12 +309,12 @@ export default function NailPriceMenu({
         {/* 核心價目 */}
         <div className="border border-border rounded-lg p-3">
           <p className="text-sm text-muted-foreground uppercase tracking-wider mb-2 font-medium">核心價目</p>
-          <div className="space-y-2">
+          <div className="space-y-1">
             {coreCategories.map((cat) =>
               cat.items.map((item, idx) => (
-                <div key={`core-${idx}`} className="flex items-center justify-between py-2">
-                  <span className="text-base font-medium text-foreground">{item.name}</span>
-                  <span className="font-serif text-lg font-semibold text-muted-foreground ml-2 whitespace-nowrap">
+                <div key={`core-${idx}`} className="flex items-center justify-between py-1">
+                  <span className="text-sm font-medium text-foreground">{item.name}</span>
+                  <span className="font-serif text-sm font-semibold text-muted-foreground ml-2 whitespace-nowrap">
                     {item.price || "—"}
                   </span>
                 </div>
@@ -326,12 +326,12 @@ export default function NailPriceMenu({
         {/* 卸甲 */}
         <div className="border border-border rounded-lg p-3">
           <p className="text-sm text-muted-foreground uppercase tracking-wider mb-2 font-medium">卸甲</p>
-          <div className="space-y-2">
+          <div className="space-y-1">
             {careCategories.map((cat) =>
               cat.items.map((item, idx) => (
-                <div key={`care-${idx}`} className="flex items-center justify-between py-2">
-                  <span className="text-base font-medium text-foreground">{item.name}</span>
-                  <span className="font-serif text-lg font-semibold text-muted-foreground ml-2 whitespace-nowrap">
+                <div key={`care-${idx}`} className="flex items-center justify-between py-1">
+                  <span className="text-sm font-medium text-foreground">{item.name}</span>
+                  <span className="font-serif text-sm font-semibold text-muted-foreground ml-2 whitespace-nowrap">
                     {item.price || "—"}
                   </span>
                 </div>
@@ -344,14 +344,14 @@ export default function NailPriceMenu({
         {extendedCategories.length > 0 && (
           <div className="border border-border rounded-lg p-3">
             <p className="text-sm text-muted-foreground uppercase tracking-wider mb-2 font-medium">保養延甲</p>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {extendedCategories.map((cat) => (
                 <div key={cat.category}>
                   <p className="text-xs text-muted-foreground/70 uppercase tracking-wider mb-1">{cat.category}</p>
                   {cat.items.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between py-2">
-                      <span className="text-base font-medium text-foreground">{item.name}</span>
-                      <span className="font-serif text-lg font-semibold text-muted-foreground ml-2 whitespace-nowrap">
+                    <div key={idx} className="flex items-center justify-between py-1">
+                      <span className="text-sm font-medium text-foreground">{item.name}</span>
+                      <span className="font-serif text-sm font-semibold text-muted-foreground ml-2 whitespace-nowrap">
                         {item.price || "—"}
                       </span>
                     </div>
