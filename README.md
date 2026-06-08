@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# YOJN Mégazine — Taichung Nail & Beauty Professionals Platform
 
-## Getting Started
+**Live Demo**: [https://yojn-magazine.vercel.app](https://yojn-magazine.vercel.app)
 
-First, run the development server:
+A modern platform connecting customers with high-quality nail artists and beauty professionals in Taichung. Helping users find trustworthy salons using clear, objective criteria.
+
+## 🎯 Project Overview
+
+- **Focus**: Taichung nail art & beauty industry professional platform
+- **Goal**: Enable users to discover reliable nail technicians using hard metrics (reviews, votes, techniques, pricing, etc.)
+- **Development Approach**: Heavily built with AI coding assistants (primarily VS Code + Cline), significantly accelerating development
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 15 (App Router) + TypeScript
+- **Database & Auth**: Supabase (PostgreSQL)
+- **Styling**: Tailwind CSS
+- **Deployment**: Vercel
+- **AI Tools**: Cline + multiple AI coding assistants
+- **Others**: ESLint, PostCSS
+
+## ✨ Key Features
+
+- Multi-dimensional filtering (district, style, core techniques, nail shapes, salon experience, budget)
+- Reader voting & certification system (Treasure Recommendation, Atmosphere, Service Quality)
+- Technical tags and verified user feedback
+- Detailed salon pages with photos, reviews, and contact info
+- Fully responsive design (mobile-first)
+
+## 🚀 AI-Assisted Development
+
+This project showcases my practical experience using AI tools for full-stack development:
+- Rapid generation and iteration of UI components
+- Database schema design and Supabase integration
+- UI/UX optimization and typography improvements
+- Efficient debugging and feature implementation
+
+The process deepened my understanding of how high-quality training data significantly impacts AI performance.
+
+## 📁 Notable Files
+
+- `AGENTS.md` / `CLAUDE.md`: AI prompt and agent records
+- `task-progress.md`: Development task tracking and optimization notes
+- `supabase/migrations`: Database migration files
+
+## 🛠️ Local Development
 
 ```bash
+# Install dependencies
+npm install
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Open http://localhost:3000 to view the application.
+📌 Future Plans
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Develop mobile app version
+Add more interactive features and AI recommendations
+Expand coverage to other cities in Taiwan
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Built with ❤️ in Taichung, Taiwan
+Personal AI-powered project | Continuously improving
