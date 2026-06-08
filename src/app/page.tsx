@@ -63,6 +63,7 @@ interface StoreRow {
   voted_by_skill?: string[];
   voted_by_aesthetic?: string[];
   voted_by_service?: string[];
+  created_at?: string;
 }
 
 
@@ -93,7 +94,9 @@ interface ReviewRow {
   proof_requests?: number;
   actual_duration?: number;
   is_returning?: boolean;
+  service_tags?: string[];
 }
+
 
 /* ========================================
    Mapping helpers
@@ -136,6 +139,7 @@ function mapStore(row: StoreRow): Store {
     voted_by_skill: row.voted_by_skill ?? [],
     voted_by_aesthetic: row.voted_by_aesthetic ?? [],
     voted_by_service: row.voted_by_service ?? [],
+    created_at: row.created_at ?? '',
   };
 }
 
@@ -160,8 +164,10 @@ function mapReview(row: ReviewRow): Review {
     proof_requests: row.proof_requests ?? undefined,
     actual_duration: row.actual_duration ?? undefined,
     is_returning: row.is_returning ?? undefined,
+    service_tags: row.service_tags ?? undefined,
   };
 }
+
 
 /* ========================================
    Budget filter helper
@@ -320,11 +326,21 @@ export default function HomePage() {
     // Apply sorting
     switch (selectedSort) {
       case "🏆 推薦排序":
+        // 综合三维投票总分
         result.sort((a, b) => {
           const scoreA = (a.vote_skill ?? 0) + (a.vote_aesthetic ?? 0) + (a.vote_service ?? 0);
           const scoreB = (b.vote_skill ?? 0) + (b.vote_aesthetic ?? 0) + (b.vote_service ?? 0);
           return scoreB - scoreA;
         });
+        break;
+      case "👍 寶藏推推":
+        result.sort((a, b) => (b.vote_skill ?? 0) - (a.vote_skill ?? 0));
+        break;
+      case "🤍 氛圍絕美":
+        result.sort((a, b) => (b.vote_aesthetic ?? 0) - (a.vote_aesthetic ?? 0));
+        break;
+      case "🧘 服務優質":
+        result.sort((a, b) => (b.vote_service ?? 0) - (a.vote_service ?? 0));
         break;
       case "👣 人氣排序":
         result.sort((a, b) => (b.visit_count ?? 0) - (a.visit_count ?? 0));
@@ -337,8 +353,9 @@ export default function HomePage() {
         break;
       case "🆕 最新進駐":
         result.sort((a, b) => {
-          // Use id as proxy for created_at (UUID v1 has timestamp)
-          return a.id < b.id ? 1 : -1;
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return dateB - dateA;
         });
         break;
     }
@@ -612,22 +629,22 @@ function HomeView({
         {/* Search Bar - Mobile */}
         <div className="mb-4">
           <div className="flex items-stretch border border-border rounded-lg overflow-hidden bg-card">
-            <div className="flex-1 flex items-center px-3 gap-2">
+            <div className="flex-1 flex items-center px-2 sm:px-3 gap-1 sm:gap-2 min-w-0">
               <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
               <input
                 type="text"
                 placeholder="搜尋店名、風格或美甲師"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 py-3 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none"
+                className="flex-1 py-2.5 sm:py-3 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none min-w-0"
               />
             </div>
-            <div className="flex items-center px-3 border-l border-border gap-1 text-xs text-muted-foreground">
+            <div className="hidden xs:flex items-center px-2 sm:px-3 border-l border-border gap-1 text-xs text-muted-foreground flex-shrink-0">
               <MapPin className="w-3.5 h-3.5" />
-              <span>{selectedArea}</span>
+              <span className="whitespace-nowrap">{selectedArea}</span>
               <ChevronDown className="w-3.5 h-3.5" />
             </div>
-            <button className="px-4 bg-foreground text-background flex items-center justify-center">
+            <button className="px-3 sm:px-4 bg-foreground text-background flex items-center justify-center flex-shrink-0">
               <Search className="w-4 h-4" />
             </button>
           </div>
@@ -664,29 +681,35 @@ function HomeView({
         />
 
         {/* Sort Dropdown + Results Count + View Switcher */}
-        <div className="flex flex-wrap items-center justify-between mb-4 gap-y-2">
-          <div className="flex items-center gap-2">
-            {/* Sort Dropdown */}
-            <div className="relative">
-              <select
-                value={selectedSort}
-                onChange={(e) => setSelectedSort(e.target.value)}
-                className="appearance-none bg-transparent border border-border rounded-lg px-2.5 py-1.5 pr-7 text-xs font-serif text-muted-foreground focus:outline-none focus:border-foreground transition-colors cursor-pointer"
-              >
-                <option value="🏆 推薦排序">🏆 推薦排序</option>
-                <option value="👣 人氣排序">👣 人氣排序</option>
-                <option value="💰 價格低→高">💰 價格低→高</option>
-                <option value="💎 價格高→低">💎 價格高→低</option>
-                <option value="🆕 最新進駐">🆕 最新進駐</option>
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
-            </div>
-            <p className="text-xs text-muted-foreground whitespace-nowrap">
+        <div className="flex items-center mb-4 gap-y-1">
+          {/* 左：排序下拉選單（不變） */}
+          <div className="relative">
+            <select
+              value={selectedSort}
+              onChange={(e) => setSelectedSort(e.target.value)}
+              className="appearance-none bg-transparent border border-border rounded-lg px-2.5 py-1.5 pr-7 text-xs font-serif text-muted-foreground focus:outline-none focus:border-foreground transition-colors cursor-pointer"
+            >
+              <option value="🏆 推薦排序">🏆 推薦排序</option>
+              <option value="👍 寶藏推推">👍 寶藏推推</option>
+              <option value="🤍 氛圍絕美">🤍 氛圍絕美</option>
+              <option value="🧘 服務優質">🧘 服務優質</option>
+              <option value="👣 人氣排序">👣 人氣排序</option>
+              <option value="💰 價格低→高">💰 價格低→高</option>
+              <option value="💎 價格高→低">💎 價格高→低</option>
+              <option value="🆕 最新進駐">🆕 最新進駐</option>
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
+          </div>
+
+          {/* 中：計數文字（置中，允許換行但不拆詞） */}
+          <div className="flex-1 text-center">
+            <p className="text-xs text-muted-foreground" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
               找到{" "}
-              <span className="text-foreground font-medium">
-                {stores.length}
-              </span>{" "}
-              間符合條件的神店
+              <span className="text-foreground font-medium whitespace-nowrap">
+                {stores.length}&nbsp;間
+              </span>
+              <wbr />
+              符合條件
             </p>
           </div>
 

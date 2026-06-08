@@ -3,7 +3,8 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Store, Review, PriceMenuItem } from "@/data/mockData";
-import { warningKeywords, reviewTags } from "@/data/mockData";
+import { warningKeywords, reviewTags, serviceReviewTags } from "@/data/mockData";
+
 import { useAuth } from "@/context/AuthContext";
 import AuthModal from "@/components/AuthModal";
 import NailPriceMenu from "@/components/NailPriceMenu";
@@ -82,8 +83,8 @@ export function SalonCard({ store, onClick, onParentSalonClick }: SalonCardProps
       )}
 
       <div className="p-3 flex flex-col flex-1">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="font-serif text-lg sm:text-xl font-semibold">@{store.ig_username}</h3>
+        <div className="flex items-start justify-between mb-1">
+          <h3 className="font-serif text-lg sm:text-xl font-semibold">{store.name}</h3>
           <Bookmark className="w-4 h-4 text-muted-foreground flex-shrink-0" />
         </div>
 
@@ -99,9 +100,19 @@ export function SalonCard({ store, onClick, onParentSalonClick }: SalonCardProps
           </button>
         )}
 
-        <p className="text-sm text-muted-foreground mb-3">
-          {store.specialties.map((s) => s.name).join(" × ")}
-        </p>
+        {/* 動態核心標籤（取代手寫副標） */}
+        {store.top_tags && store.top_tags.length > 0 ? (
+          <div className="flex items-center gap-2 mb-2 text-sm">
+            {store.top_tags.map((tag, idx) => (
+              <span key={tag} className="inline-flex items-center gap-1">
+                <span className="text-muted-foreground/80 font-light">👑 {tag}</span>
+                {idx < (store.top_tags?.length ?? 0) - 1 && <span className="text-border">·</span>}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground/50 mb-2">尚無讀者認證特色</p>
+        )}
 
         {store.manicurists && store.manicurists.length > 0 && (
           <p className="text-xs text-muted-foreground/70 mb-2">
@@ -109,40 +120,28 @@ export function SalonCard({ store, onClick, onParentSalonClick }: SalonCardProps
           </p>
         )}
 
-        {/* Bottom info: two rows */}
-        <div className="flex flex-col gap-1 pt-2 border-t border-border mt-auto">
-          {/* 第一行：投票 + 地区 */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <span>👍寶藏推推 {store.vote_skill ?? 0}</span>
-              <span>🤍氛圍絕美 {store.vote_aesthetic ?? 0}</span>
-              <span>🧘服務優質 {store.vote_service ?? 0}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-border">|</span>
-              <span>📍{store.area}</span>
-            </div>
+        {/* Bottom info: 投票 + IG 連結 + 價格人數 */}
+        <div className="flex flex-col gap-2 pt-2 border-t border-border mt-auto">
+          {/* 第一行：投票數，三個膠囊始終顯示 */}
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+            <span>👍寶藏推推 {store.vote_skill ?? 0}</span>
+            <span>🤍氛圍絕美 {store.vote_aesthetic ?? 0}</span>
+            <span>🧘服務優質 {store.vote_service ?? 0}</span>
           </div>
-          {/* 第二行：Top 3 标签 + 价格 + 人数 */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              {store.top_tags && store.top_tags.length > 0 ? (
-                store.top_tags.map((tag, idx) => (
-                  <span
-                    key={tag}
-                    className={`px-1.5 py-0.5 rounded-full border ${
-                      idx === 0 ? 'bg-foreground/10 border-foreground/30 text-foreground' : 'bg-secondary border-border text-muted-foreground'
-                    }`}
-                  >
-                    #{tag}
-                  </span>
-                ))
-              ) : null}
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="font-serif">
-                💰 NT${store.single_color_price != null ? store.single_color_price.toLocaleString() : '-'}
-              </span>
+
+          {/* 第二行：IG 連結 + 價格人數 */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
+            <a
+              href={`https://instagram.com/${store.ig_username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="hover:text-foreground transition-colors truncate max-w-[140px]"
+            >
+              @{store.ig_username}
+            </a>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <span className="font-serif">💰 NT${store.single_color_price != null ? store.single_color_price.toLocaleString() : '-'}</span>
               <span className="text-border">·</span>
               <span>🐾{store.visit_count ?? 0}人來過</span>
             </div>
@@ -163,67 +162,72 @@ export function SalonCardList({ store, onClick, onParentSalonClick }: SalonCardP
       onClick={onClick}
       className="cursor-pointer border-b border-[#EAEAEA] py-3 hover:bg-secondary/30 active:bg-secondary/50 transition-colors"
     >
-      <div className="flex items-center gap-2">
-        <h3 className="font-serif text-sm font-semibold flex-shrink-0 min-w-[100px]">
-          @{store.ig_username}
-        </h3>
-        <span className="text-xs text-muted-foreground flex-shrink-0 px-2 py-0.5 bg-secondary rounded">
-          {store.area}
-        </span>
-        <div className="flex flex-col items-end gap-0.5 ml-auto">
-          {/* 第一行：投票 + 地区 */}
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <span>👍寶藏推推 {store.vote_skill ?? 0}</span>
-            <span>🤍氛圍絕美 {store.vote_aesthetic ?? 0}</span>
-            <span>🧘服務優質 {store.vote_service ?? 0}</span>
-            <span className="text-border">|</span>
-            <span>📍{store.area}</span>
-          </div>
-          {/* 第二行：Top 3 标签 + 价格 + 人数 */}
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            {store.top_tags && store.top_tags.length > 0 && (
-              <>
-                {store.top_tags.map((tag, idx) => (
-                  <span
-                    key={tag}
-                    className={`px-1 py-0.5 text-xs rounded-full border ${
-                      idx === 0 ? 'bg-foreground/10 border-foreground/30 text-foreground' : 'bg-secondary border-border text-muted-foreground'
-                    }`}
-                  >
-                    #{tag}
-                  </span>
-                ))}
-                <span className="text-border">|</span>
-              </>
-            )}
-            <span className="font-serif">
-              💰NT${store.single_color_price != null ? store.single_color_price.toLocaleString() : '-'}
-            </span>
-            <span className="text-border">·</span>
-            <span>🐾{store.visit_count ?? 0}人來過</span>
-          </div>
+      <div className="flex flex-col gap-1">
+        {/* 第一行：店名 + 區域 */}
+        <div className="flex items-center gap-2">
+          <h3 className="font-serif text-sm font-semibold">{store.name}</h3>
+          <span className="text-xs text-muted-foreground flex-shrink-0 px-2 py-0.5 bg-secondary rounded">
+            {store.area}
+          </span>
         </div>
-      </div>
-      {store.parent_salon_ig && (
-        <div className="mt-0.5 pl-0">
+
+        {/* 核心標籤（動態） */}
+        {store.top_tags && store.top_tags.length > 0 ? (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground/80">
+            {store.top_tags.map((tag, idx) => (
+              <span key={tag} className="inline-flex items-center gap-0.5">
+                <span>👑 {tag}</span>
+                {idx < (store.top_tags?.length ?? 0) - 1 && <span className="text-border">·</span>}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground/50">尚無讀者認證特色</p>
+        )}
+
+        {store.parent_salon_ig && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               onParentSalonClick?.(store.parent_salon_ig!);
             }}
-            className="text-xs text-muted-foreground/50 hover:text-foreground transition-colors"
+            className="text-xs text-muted-foreground/50 hover:text-foreground transition-colors text-left"
           >
             🔗 @{store.parent_salon_ig}
           </button>
-        </div>
-      )}
-      {store.manicurists && store.manicurists.length > 0 && (
-        <div className="mt-0.5 pl-0">
-          <span className="text-xs text-muted-foreground/60">
+        )}
+
+        {store.manicurists && store.manicurists.length > 0 && (
+          <p className="text-xs text-muted-foreground/60">
             🔍 認證職人: {store.manicurists.join(", ")}
-          </span>
+          </p>
+        )}
+
+        {/* 投票行：三個膠囊始終顯示 */}
+        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+          <span>👍寶藏推推 {store.vote_skill ?? 0}</span>
+          <span>🤍氛圍絕美 {store.vote_aesthetic ?? 0}</span>
+          <span>🧘服務優質 {store.vote_service ?? 0}</span>
         </div>
-      )}
+
+        {/* 底部：IG 連結 + 價格人數 */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <a
+            href={`https://instagram.com/${store.ig_username}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="hover:text-foreground transition-colors truncate max-w-[140px]"
+          >
+            @{store.ig_username}
+          </a>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <span className="font-serif">💰 NT${store.single_color_price != null ? store.single_color_price.toLocaleString() : '-'}</span>
+            <span className="text-border">·</span>
+            <span>🐾{store.visit_count ?? 0}人來過</span>
+          </div>
+        </div>
+      </div>
     </article>
   );
 }
@@ -261,7 +265,7 @@ export function SalonCardGrid({ store, onClick, onParentSalonClick }: SalonCardP
         </div>
       )}
       <div className="p-2 flex flex-col flex-1">
-        <h3 className="font-serif text-xs mb-0.5 truncate">@{store.ig_username}</h3>
+        <h3 className="font-serif text-xs mb-0.5 truncate">{store.name}</h3>
         {store.parent_salon_ig && (
           <button
             onClick={(e) => {
@@ -273,45 +277,48 @@ export function SalonCardGrid({ store, onClick, onParentSalonClick }: SalonCardP
             🔗 @{store.parent_salon_ig}
           </button>
         )}
-        <p className="text-xs text-muted-foreground truncate mb-1.5">
-          {store.specialties.map((s) => s.name).join(" × ")}
-        </p>
+
+        {/* 核心標籤（簡短形式） */}
+        {store.top_tags && store.top_tags.length > 0 && (
+          <p className="text-xs text-muted-foreground/80 truncate mb-1.5">
+            {store.top_tags.map((tag, idx) => (
+              <span key={tag} className="inline-flex items-center gap-0.5">
+                <span>👑{tag}</span>
+                {idx < (store.top_tags?.length ?? 0) - 1 && <span className="text-border mx-0.5">·</span>}
+              </span>
+            ))}
+          </p>
+        )}
+
         {store.manicurists && store.manicurists.length > 0 && (
           <p className="text-xs text-muted-foreground/60 truncate mb-1">
             🔍 {store.manicurists.join(", ")}
           </p>
         )}
-        <div className="flex flex-col gap-0.5 text-xs text-muted-foreground mt-auto pt-1.5 border-t border-border">
-          {/* 第一行：投票 + 地区 */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
-              <span>👍{store.vote_skill ?? 0}</span>
-              <span>🤍{store.vote_aesthetic ?? 0}</span>
-              <span>🧘{store.vote_service ?? 0}</span>
-            </div>
-            <span>📍{store.area}</span>
+        {/* Bottom info: 投票 + IG 連結 + 價格人數 */}
+        <div className="flex flex-col gap-1.5 pt-1.5 border-t border-border mt-auto">
+          {/* 第一行：投票數，三個始終顯示 */}
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+            <span>👍 {store.vote_skill ?? 0}</span>
+            <span>🤍 {store.vote_aesthetic ?? 0}</span>
+            <span>🧘 {store.vote_service ?? 0}</span>
           </div>
-          {/* 第二行：Top 3 + 价格 + 人数 */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-0.5">
-              {store.top_tags && store.top_tags.length > 0 && (
-                store.top_tags.slice(0, 2).map((tag, idx) => (
-                  <span
-                    key={tag}
-                    className={`px-1 py-0.5 text-xs rounded-full border ${
-                      idx === 0 ? 'bg-foreground/10 border-foreground/30 text-foreground' : 'bg-secondary border-border text-muted-foreground'
-                    }`}
-                  >
-                    #{tag}
-                  </span>
-                ))
-              )}
-            </div>
-            <div className="flex items-center gap-0.5">
-              <span className="font-serif">
-                💰{store.single_color_price != null ? store.single_color_price.toLocaleString() : '-'}
-              </span>
-              <span>🐾{store.visit_count ?? 0}</span>
+
+          {/* 第二行：IG 連結 + 價格人數 */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <a
+              href={`https://instagram.com/${store.ig_username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="hover:text-foreground transition-colors truncate max-w-[100px]"
+            >
+              @{store.ig_username}
+            </a>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <span className="font-serif">💰${store.single_color_price != null ? store.single_color_price.toLocaleString() : '-'}</span>
+              <span className="text-border">·</span>
+              <span>🐾{store.visit_count ?? 0}人</span>
             </div>
           </div>
         </div>
@@ -518,6 +525,27 @@ export function ReviewCard({ review, onDelete, onEdit, onReply, replies, parentR
         </div>
       )}
 
+      {/* Service experience tags */}
+      {review.service_tags && review.service_tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {review.service_tags.map(tag => {
+            const isWarning = reviewTags.warning.includes(tag);
+            return (
+              <span
+                key={tag}
+                className={`px-2 py-0.5 text-xs rounded-full border ${
+                  isWarning
+                    ? 'bg-orange-50 text-orange-700 border-orange-200'
+                    : 'bg-green-50 text-green-700 border-green-200'
+                }`}
+              >
+                {isWarning ? '⚠️ ' : '✅ '}{tag}
+              </span>
+            );
+          })}
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-1.5">
         {review.tags.map((tag) => (
           <span key={tag} className={`px-2 py-0.5 text-xs rounded-full border border-border ${getTagStyle(tag)}`}>
@@ -525,6 +553,7 @@ export function ReviewCard({ review, onDelete, onEdit, onReply, replies, parentR
           </span>
         ))}
       </div>
+
 
       {/* Reply button */}
       {onReply && !review.parent_id && (
@@ -1964,6 +1993,8 @@ interface EditReviewFormProps {
 function EditReviewForm({ review, onClose, onSave }: EditReviewFormProps) {
   const [comment, setComment] = useState(review.comment);
   const [selectedTags, setSelectedTags] = useState<string[]>(review.tags ?? []);
+  const [serviceTags, setServiceTags] = useState<string[]>(review.service_tags ?? []);
+  const maxServiceTags = 3;
   const [manicuristName, setManicuristName] = useState(review.manicurist_name ?? "");
   const [actualPrice, setActualPrice] = useState(review.actual_price?.toString() ?? "");
   const [imageUrls, setImageUrls] = useState<string[]>(review.image_urls ?? []);
@@ -1974,6 +2005,17 @@ function EditReviewForm({ review, onClose, onSave }: EditReviewFormProps) {
   const toggleTag = (tag: string) => {
     setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
   };
+
+  const toggleServiceTag = (tagName: string) => {
+    setServiceTags((prev) =>
+      prev.includes(tagName)
+        ? prev.filter((t) => t !== tagName)
+        : prev.length < maxServiceTags
+          ? [...prev, tagName]
+          : prev
+    );
+  };
+
 
   const removeImage = (index: number) => {
     setImageUrls(prev => prev.filter((_, i) => i !== index));
@@ -2008,6 +2050,7 @@ function EditReviewForm({ review, onClose, onSave }: EditReviewFormProps) {
           manicurist_name: manicuristName.trim() || null,
           actual_price: actualPrice ? parseInt(actualPrice) : null,
           image_urls: imageUrls.length > 0 ? imageUrls : null,
+          service_tags: serviceTags.length > 0 ? serviceTags : null,
         })
         .eq("id", review.id)
         .eq("user_id", user.id); // 双重保险
@@ -2022,6 +2065,7 @@ function EditReviewForm({ review, onClose, onSave }: EditReviewFormProps) {
             manicurist_name: manicuristName.trim() || undefined,
             actual_price: actualPrice ? parseInt(actualPrice) : undefined,
             image_urls: imageUrls.length > 0 ? imageUrls : undefined,
+            service_tags: serviceTags.length > 0 ? serviceTags : undefined,
           });
           return;
         }
@@ -2035,7 +2079,9 @@ function EditReviewForm({ review, onClose, onSave }: EditReviewFormProps) {
         manicurist_name: manicuristName.trim() || undefined,
         actual_price: actualPrice ? parseInt(actualPrice) : undefined,
         image_urls: imageUrls.length > 0 ? imageUrls : undefined,
+        service_tags: serviceTags.length > 0 ? serviceTags : undefined,
       });
+
     } catch (err: any) {
       console.error("Error updating review:", err);
       setError(err?.message || "更新失敗");
@@ -2111,6 +2157,8 @@ interface ReviewFormInlineProps {
 function ReviewFormInline({ storeId, onClose, onSubmit, onImageUploaded, parentId, parentNickname }: ReviewFormInlineProps) {
   const [comment, setComment] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [serviceTags, setServiceTags] = useState<string[]>([]);
+  const maxServiceTags = 3;
   const [manicuristName, setManicuristName] = useState("");
   const [actualPrice, setActualPrice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -2133,6 +2181,17 @@ function ReviewFormInline({ storeId, onClose, onSubmit, onImageUploaded, parentI
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
   };
+
+  const toggleServiceTag = (tagName: string) => {
+    setServiceTags((prev) =>
+      prev.includes(tagName)
+        ? prev.filter((t) => t !== tagName)
+        : prev.length < maxServiceTags
+          ? [...prev, tagName]
+          : prev
+    );
+  };
+
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -2212,6 +2271,7 @@ function ReviewFormInline({ storeId, onClose, onSubmit, onImageUploaded, parentI
         manicurist_name: manicuristName.trim() || null,
         actual_price: actualPrice ? parseInt(actualPrice) : null,
         image_urls: uploadedImages.length > 0 ? uploadedImages : null,
+        service_tags: serviceTags.length > 0 ? serviceTags : null,
       };
 
       // UGC 2.0 fields
@@ -2223,6 +2283,7 @@ function ReviewFormInline({ storeId, onClose, onSubmit, onImageUploaded, parentI
       if (envTags.length > 0) insertPayload.env_tags = envTags;
       if (actualDuration !== null) insertPayload.actual_duration = actualDuration;
       if (isReturning !== null) insertPayload.is_returning = isReturning;
+
 
       const { data, error: insertError } = await supabase
         .from("reviews")
@@ -2326,25 +2387,33 @@ function ReviewFormInline({ storeId, onClose, onSubmit, onImageUploaded, parentI
           <p className="text-xs text-muted-foreground/60 mb-2 text-right">{comment.length}/{maxCommentLength}</p>
         )}
 
-        {/* Tags */}
+        {/* Service Experience Tags */}
         <div className="mb-3">
-          <p className="text-xs text-muted-foreground mb-1.5">標籤（可複選）</p>
-          <div className="flex flex-wrap gap-1.5">
-            {[...reviewTags.positive, ...reviewTags.warning].map((tag) => (
-              <button
-                key={tag}
-                onClick={() => toggleTag(tag)}
-                className={`px-2 py-0.5 text-xs rounded-full border transition-all ${
-                  selectedTags.includes(tag)
-                    ? "bg-foreground text-background border-foreground"
-                    : "bg-card text-foreground border-border hover:bg-secondary"
-                }`}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
+          <p className="text-xs text-muted-foreground mb-1.5">服務體感（最多選 3 個）</p>
+          {Object.values(serviceReviewTags).map(cat => (
+            <div key={cat.label} className="mb-2">
+              <p className="text-[10px] text-muted-foreground/70 mb-1">{cat.label}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {cat.tags.map(tag => (
+                  <button
+                    key={tag.name}
+                    onClick={() => toggleServiceTag(tag.name)}
+                    className={`px-2 py-0.5 text-xs rounded-full border transition-all ${
+                      serviceTags.includes(tag.name)
+                        ? tag.type === 'positive'
+                          ? 'bg-green-50 text-green-700 border-green-300'
+                          : 'bg-orange-50 text-orange-700 border-orange-300'
+                        : 'bg-card text-muted-foreground border-border hover:bg-secondary'
+                    }`}
+                  >
+                    {tag.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
+
 
         {/* Optional fields */}
         <div className="grid grid-cols-2 gap-2 mb-3">

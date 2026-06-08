@@ -38,6 +38,7 @@ export interface Store {
   avg_actual_duration?: number;
   returning_rate?: number;
   top_tags?: string[]; // Top 3 most voted tags from tag_votes
+  created_at?: string; // ISO timestamp of store creation/registration
 }
 
 export interface Review {
@@ -61,6 +62,7 @@ export interface Review {
   proof_requests?: number;
   actual_duration?: number;
   is_returning?: boolean;
+  service_tags?: string[]; // Service experience tags from review form
 }
 
 export interface StoreVisit {
@@ -169,23 +171,46 @@ export const areaOptions = [
   "和平區", "石岡區", "大安區", "新社區",
 ];
 
+// Service experience tags for review form (grouped by category)
+export const serviceReviewTags = {
+  communication: {
+    label: "社交與溝通",
+    tags: [
+      { name: "過程不蒙談", type: "positive" },
+      { name: "i人舒適圈", type: "positive" },
+      { name: "溝通零代溝", type: "positive" },
+      { name: "推銷感較重", type: "warning" },
+      { name: "身家調查系", type: "warning" },
+    ],
+  },
+  technique: {
+    label: "技術與細節",
+    tags: [
+      { name: "維持度神級", type: "positive" },
+      { name: "建構平整飽滿", type: "positive" },
+      { name: "死皮修剪乾淨", type: "positive" },
+      { name: "暈染高級不俗氣", type: "positive" },
+      { name: "稍微溢膠", type: "warning" },
+      { name: "建構稍嫌薄", type: "warning" },
+      { name: "包邊不夠厚", type: "warning" },
+    ],
+  },
+  pricing: {
+    label: "時間與金錢",
+    tags: [
+      { name: "報價透明", type: "positive" },
+      { name: "時間掌控精確", type: "positive" },
+      { name: "現場有加價項目", type: "warning" },
+      { name: "等候時間較長", type: "warning" },
+      { name: "新手感覺較明顯", type: "warning" },
+    ],
+  },
+};
+
+// Retain old reviewTags for backward compatibility (can be cleaned up later)
 export const reviewTags = {
-  positive: [
-    "維持度極佳",
-    "動作迅速",
-    "完全不推銷",
-    "建構扎實",
-    "暈染專業",
-    "溝通仔細",
-    "環境舒適",
-  ],
-  warning: [
-    "建構稍薄",
-    "稍微溢膠",
-    "現場有加價項目",
-    "等候時間較長",
-    "價位偏高",
-  ],
+  positive: Object.values(serviceReviewTags).flatMap(cat => cat.tags.filter(t => t.type === 'positive').map(t => t.name)),
+  warning: Object.values(serviceReviewTags).flatMap(cat => cat.tags.filter(t => t.type === 'warning').map(t => t.name)),
 };
 
 // Tags used in the submission form
@@ -199,6 +224,7 @@ export const submissionTags = [
   "手繪設計",
   "韓系清透",
 ];
+
 
 // Keywords to determine warning tags in review cards
 export const warningKeywords = ["加價", "溢膠", "偏高", "稍微", "稍薄", "但"];
