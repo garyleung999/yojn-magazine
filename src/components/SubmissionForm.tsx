@@ -3,7 +3,8 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Store } from "@/data/mockData";
-import { areaOptions, submissionTags } from "@/data/mockData";
+import { areaOptions } from "@/data/mockData";
+
 import { useAuth } from "@/context/AuthContext";
 import AuthModal from "@/components/AuthModal";
 import { Check, X, Loader2 } from "lucide-react";
@@ -27,7 +28,6 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
     ig_username: "",
     area: "",
     address: "",
-    tags: [] as string[],
     comment: "",
     image_urls: [] as string[],
     // UGC 2.0: User-provided fields instead of hardcoded
@@ -35,20 +35,12 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
     is_returning: null as boolean | null,
     vibe_tag: "",
   });
+
   const [uploadingImages, setUploadingImages] = useState<boolean[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [duplicateToast, setDuplicateToast] = useState<{ visible: boolean; storeId: string }>({ visible: false, storeId: "" });
-
-  const toggleTag = (tag: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      tags: prev.tags.includes(tag)
-        ? prev.tags.filter((t) => t !== tag)
-        : [...prev.tags, tag],
-    }));
-  };
 
   const handleSubmit = async () => {
     if (!formData.name || !formData.ig_username || !formData.area) return;
@@ -83,7 +75,7 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
     try {
       // Use user-provided values or null (to be filled by community data)
       const avgDuration = formData.avg_duration_hours ? parseFloat(formData.avg_duration_hours) : null;
-      const vibeTag = formData.vibe_tag || formData.tags[0] || "待驗證";
+      const vibeTag = formData.vibe_tag || "待驗證";
 
       // 1. Insert store
       const { data: newStore, error: storeError } = await supabase
@@ -96,7 +88,7 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
           avg_duration_hours: avgDuration,
           retention_rate: null,
           vibe_tag: vibeTag,
-          tags: formData.tags,
+          tags: [],
           image_urls: formData.image_urls.length > 0 ? formData.image_urls : null,
         })
         .select("id")
@@ -105,22 +97,7 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
       if (storeError) throw storeError;
       if (!newStore) throw new Error("Failed to create store");
 
-      // 2. Insert specialties
-      const specialtiesData = formData.tags.slice(0, 2).map((tag, idx) => ({
-        store_id: newStore.id,
-        name: tag,
-        percentage: idx === 0 ? 70 : 30,
-      }));
-
-      if (specialtiesData.length > 0) {
-        const { error: specError } = await supabase
-          .from("store_specialties")
-          .insert(specialtiesData);
-
-        if (specError) throw specError;
-      }
-
-      // 3. Build the Store object for optimistic update
+      // 2. Build the Store object for optimistic update
       const createdStore: Store = {
         id: newStore.id,
         name: formData.name,
@@ -129,14 +106,12 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
         banner_url: "",
         avg_duration_hours: 1.5,
         retention_rate: 90,
-        vibe_tag: formData.tags[0] || "待驗證",
-        specialties: formData.tags.slice(0, 2).map((tag, idx) => ({
-          name: tag,
-          percentage: idx === 0 ? 70 : 30,
-        })),
-        tags: formData.tags,
+        vibe_tag: vibeTag,
+        specialties: [],
+        tags: [],
         image_urls: formData.image_urls.length > 0 ? formData.image_urls : undefined,
       };
+
 
       setIsSubmitted(true);
       setTimeout(() => {
@@ -266,29 +241,8 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
             />
           </div>
 
-          {/* Tags */}
-          <div>
-            <label className="text-xs text-muted-foreground mb-2 block">
-              核心特徵標籤
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {submissionTags.map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => toggleTag(tag)}
-                  className={`px-3 py-1.5 text-xs rounded-full border transition-all ${
-                    formData.tags.includes(tag)
-                      ? "bg-foreground text-background border-foreground"
-                      : "bg-card text-foreground border-border"
-                  }`}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Image Upload Area - Native File Upload via Supabase Storage */}
+
           <div>
             <label className="text-xs text-muted-foreground mb-1.5 block">
               店家照片 (選填)
