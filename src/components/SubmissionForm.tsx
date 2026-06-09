@@ -2,11 +2,12 @@
 
 import { useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import type { Store } from "@/data/mockData";
+import type { Store, PriceMenuItem } from "@/data/mockData";
 import { areaOptions } from "@/data/mockData";
 
 import { useAuth } from "@/context/AuthContext";
 import AuthModal from "@/components/AuthModal";
+import PriceMenuEditModal, { DEFAULT_PRICE_MENU } from "@/components/PriceMenuEditModal";
 import { Check, X, Loader2 } from "lucide-react";
 
 /* ========================================
@@ -36,6 +37,8 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
     vibe_tag: "",
   });
 
+  const [priceMenu, setPriceMenu] = useState<PriceMenuItem[]>(DEFAULT_PRICE_MENU);
+  const [showPriceEdit, setShowPriceEdit] = useState(false);
   const [uploadingImages, setUploadingImages] = useState<boolean[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,6 +93,7 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
           vibe_tag: vibeTag,
           tags: [],
           image_urls: formData.image_urls.length > 0 ? formData.image_urls : null,
+          price_menu: priceMenu,
         })
         .select("id")
         .single();
@@ -110,6 +114,7 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
         specialties: [],
         tags: [],
         image_urls: formData.image_urls.length > 0 ? formData.image_urls : undefined,
+        price_menu: priceMenu,
       };
 
 
@@ -239,6 +244,18 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
               placeholder="例：逢甲夜市附近"
               className="w-full py-2.5 text-sm bg-transparent border-b border-border focus:border-foreground focus:outline-none transition-colors"
             />
+          </div>
+
+          {/* Price Menu (Optional) */}
+          <div>
+            <label className="text-xs text-muted-foreground mb-1.5 block">價目表 (選填)</label>
+            <button
+              type="button"
+              onClick={() => setShowPriceEdit(true)}
+              className="w-full py-2.5 text-sm border border-dashed border-border rounded-xl text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {priceMenu && priceMenu.some(cat => cat.items.some(item => item.price)) ? '已設定價目表（點擊修改）' : '編輯價目表'}
+            </button>
           </div>
 
           {/* Image Upload Area - Native File Upload via Supabase Storage */}
@@ -458,6 +475,15 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
           </button>
         </div>
       </div>
+
+      {/* Price Menu Edit Modal */}
+      {showPriceEdit && (
+        <PriceMenuEditModal
+          menu={priceMenu}
+          onSave={(newMenu) => { setPriceMenu(newMenu); setShowPriceEdit(false); }}
+          onClose={() => setShowPriceEdit(false)}
+        />
+      )}
 
       {/* Duplicate Store Toast Notification */}
       {duplicateToast.visible && (
