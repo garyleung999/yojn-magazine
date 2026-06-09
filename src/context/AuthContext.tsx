@@ -138,26 +138,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Initialize auth state from Supabase session
   useEffect(() => {
-    // ── Step 1: Strip stale auth params from URL ──
-    // This must happen BEFORE getSession() so GoTrueClient doesn't
-    // attempt to validate expired tokens found in the URL.
-    stripAuthParamsFromUrl();
+    async function initAuth() {
+      // ── Step 1: Force handle hash token (priority over any old session) ──
+      const hash = window.location.hash;
+      if (hash.includes('access_token')) {
+        const params = new URLSearchParams(hash.substring(1));
+        const access_token = params.get('access_token');
+        const refresh_token = params.get('refresh_token');
+        const expires_at = params.get('expires_at');
 
-    // ── Step 2: Safety timeout ──
-    // Force loading to end after 5 seconds to prevent the app from
-    // being permanently stuck if auth hangs (e.g. network issue, 403).
-    safetyTimeoutRef.current = setTimeout(() => {
-      setIsLoading((prev) => {
-        if (prev) {
-          console.warn("Auth init timed out after 5s — forcing loading to end");
-          setError("身份驗證服務初始化逾時，部分功能可能受限。");
-          return false;
+        if (access_token && refresh_token && expires_at) {
+          // Set new session (overrides old cookies)
+          const { error } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+          if (!error) {
+            // Directly fetch user and update state
+            const { data: { user: newUser } } = await supabase.auth.getUser();
+            setUser(newUser ? mapSupabaseUser(newUser) : null);
+            setIsLoading(false);
+            // Clean URL hash to prevent reusing expired tokens on next refresh
+            window.history.replaceState(null, '', window.location.pathname);
+            return; // Skip subsequent getSession and onAuthStateChange init
+          }
         }
-        return prev;
-      });
-    }, 5000);
+      }
 
-    const initAuth = async () => {
+      // ── Step 2: Strip stale auth params from URL ──
+      stripAuthParamsFromUrl();
+
+      // ── Step 3: Safety timeout ──
+      // Force loading to end after 5 seconds to prevent the app from
+      // being permanently stuck if auth hangs (e.g. network issue, 403).
+      safetyTimeoutRef.current = setTimeout(() => {
+        setIsLoading((prev) => {
+          if (prev) {
+            console.warn("Auth init timed out after 5s — forcing loading to end");
+            setError("身份驗證服務初始化逾時，部分功能可能受限。");
+            return false;
+          }
+          return prev;
+        });
+      }, 5000);
+
+      // ── Step 4: Normal session recovery (no hash token) ──
       setIsLoading(true);
       setError(null);
       try {
@@ -178,28 +203,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         setIsLoading(false);
       }
-    };
+
+      // ── Step 5: Listen for auth state changes ──
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user) {
+          setUser(mapSupabaseUser(session.user));
+        } else {
+          setUser(null);
+        }
+      });
+
+      return () => {
+        if (safetyTimeoutRef.current) {
+          clearTimeout(safetyTimeoutRef.current);
+          safetyTimeoutRef.current = null;
+        }
+        subscription.unsubscribe();
+      };
+    }
 
     initAuth();
-
-    // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser(mapSupabaseUser(session.user));
-      } else {
-        setUser(null);
-      }
-    });
-
-    return () => {
-      if (safetyTimeoutRef.current) {
-        clearTimeout(safetyTimeoutRef.current);
-        safetyTimeoutRef.current = null;
-      }
-      subscription.unsubscribe();
-    };
   }, []);
 
 

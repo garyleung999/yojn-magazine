@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { Suspense, useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { supabase } from "@/lib/supabase";
 import type { Store, Review, PriceMenuItem } from "@/data/mockData";
@@ -188,6 +189,20 @@ function getBudgetRange(tag: string): [number, number] | null {
   }
 }
 
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="font-serif text-xl text-muted-foreground animate-pulse">
+          YOJN Mégazine
+        </div>
+      </div>
+    }>
+      <HomePageContent />
+    </Suspense>
+  );
+}
+
 function matchesBudgetFilter(store: Store, budgetTags: string[]): boolean {
   if (budgetTags.length === 0) return true;
   const price = store.single_color_price;
@@ -199,11 +214,16 @@ function matchesBudgetFilter(store: Store, budgetTags: string[]): boolean {
   });
 }
 
-export default function HomePage() {
+function HomePageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const storeParam = searchParams.get('store');
+  const submitParam = searchParams.get('submit');
+
   const [currentView, setCurrentView] = useState<"home" | "detail" | "submit">(
-    "home"
+    storeParam ? "detail" : submitParam === 'true' ? "submit" : "home"
   );
-  const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+  const [selectedStoreId, setSelectedStoreId] = useState<string | null>(storeParam);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [selectedArea, setSelectedArea] = useState("台中市");
@@ -287,6 +307,40 @@ export default function HomePage() {
 
     return () => clearTimeout(safetyTimeout);
   }, [fetchData]);
+
+  // Listen for searchParams changes (client-side route changes via router.push)
+  useEffect(() => {
+    if (storeParam) {
+      setCurrentView("detail");
+      setSelectedStoreId(storeParam);
+    } else if (submitParam === 'true') {
+      setCurrentView("submit");
+      setSelectedStoreId(null);
+    } else {
+      setCurrentView("home");
+      setSelectedStoreId(null);
+    }
+  }, [storeParam, submitParam]);
+
+  // Listen for browser back/forward navigation (popstate)
+  useEffect(() => {
+    const handlePopState = () => {
+      const url = new URL(window.location.href);
+      const store = url.searchParams.get('store');
+      const submit = url.searchParams.get('submit');
+      if (store) {
+        setCurrentView("detail");
+        setSelectedStoreId(store);
+      } else if (submit === 'true') {
+        setCurrentView("submit");
+      } else {
+        setCurrentView("home");
+        setSelectedStoreId(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
 
 
@@ -377,13 +431,11 @@ export default function HomePage() {
   };
 
   const handleStoreClick = (storeId: string) => {
-    setSelectedStoreId(storeId);
-    setCurrentView("detail");
+    router.push(`/?store=${storeId}`);
   };
 
   const handleBack = () => {
-    setCurrentView("home");
-    setSelectedStoreId(null);
+    router.push('/');
   };
 
   const handleInstagramClick = (igUsername: string) => {
@@ -409,7 +461,7 @@ export default function HomePage() {
   const handleParentSalonClick = (parentIg: string) => {
     // Filter stores by parent_salon_ig
     setSearchQuery(parentIg);
-    setCurrentView("home");
+    router.push('/');
   };
 
   const handleAddStore = (newStore: Store) => {
@@ -422,8 +474,7 @@ export default function HomePage() {
 
   // Handle duplicate redirect from SubmitView
   const handleDuplicateRedirect = (storeId: string) => {
-    setSelectedStoreId(storeId);
-    setCurrentView("detail");
+    router.push(`/?store=${storeId}`);
   };
 
   if (isLoading) {
@@ -504,7 +555,7 @@ export default function HomePage() {
             setSelectedArea={setSelectedArea}
             selectedSort={selectedSort}
             setSelectedSort={setSelectedSort}
-            onOpenSubmit={() => setCurrentView("submit")}
+            onOpenSubmit={() => router.push('/?submit=true')}
             onRetry={fetchData}
           />
         )}
