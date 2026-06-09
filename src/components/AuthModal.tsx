@@ -25,6 +25,7 @@ export default function AuthModal({
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [showLineNotice, setShowLineNotice] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // Close on Escape
@@ -91,6 +92,27 @@ export default function AuthModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm px-4"
     >
       <div className="relative w-full max-w-sm bg-[#FBF9F6] border border-[#EAEAEA] shadow-xl">
+        {/* LINE Notice Overlay */}
+        {showLineNotice && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[#FBF9F6]/95 z-10">
+            <div className="text-center p-6">
+              <div className="text-4xl mb-3">🛠️</div>
+              <p className="text-sm font-medium text-[#2B2B2B] mb-2">
+                LINE 登入功能正在開發中
+              </p>
+              <p className="text-xs text-[#6B6B6B] mb-4">
+                敬請期待後續更新
+              </p>
+              <button
+                onClick={() => setShowLineNotice(false)}
+                className="px-4 py-1.5 text-xs bg-[#2B2B2B] text-[#FBF9F6] rounded-full hover:opacity-80 transition-opacity"
+              >
+                關閉
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -164,7 +186,7 @@ export default function AuthModal({
           <div className="space-y-3">
             {/* LINE Login */}
             <button
-              onClick={() => handleProviderLogin("line")}
+              onClick={() => setShowLineNotice(true)}
               disabled={isSubmitting}
               className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-[#EAEAEA] bg-transparent hover:bg-[#F5F3F0] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
