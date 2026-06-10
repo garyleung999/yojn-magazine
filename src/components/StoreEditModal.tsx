@@ -14,9 +14,17 @@ interface StoreEditModalProps {
     vibe_tag?: string;
     parent_salon_ig?: string;
     parent_salon_name?: string;
+    branch_name?: string;
+    slug?: string;
   };
   onClose: () => void;
   onUpdate: (updatedStore: any) => void;
+}
+
+function generateSlug(name: string, branchName?: string): string {
+  const rawName = name || '';
+  const branchPart = branchName ? '-' + branchName.trim() : '';
+  return (rawName + branchPart).toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
 export default function StoreEditModal({ store, onClose, onUpdate }: StoreEditModalProps) {
@@ -28,6 +36,7 @@ export default function StoreEditModal({ store, onClose, onUpdate }: StoreEditMo
     vibe_tag: store.vibe_tag || "",
     parent_salon_ig: store.parent_salon_ig || "",
     parent_salon_name: store.parent_salon_name || "",
+    branch_name: store.branch_name || "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -35,7 +44,14 @@ export default function StoreEditModal({ store, onClose, onUpdate }: StoreEditMo
     if (!form.name || !form.ig_username || !form.area) return;
     setSaving(true);
     try {
-      const updates: any = { ...form };
+      // Generate slug from name + branch_name
+      const slug = generateSlug(form.name, form.branch_name || undefined);
+      
+      const updates: any = { 
+        ...form, 
+        slug,
+        branch_name: form.branch_name || null,
+      };
       if (!updates.parent_salon_ig) updates.parent_salon_ig = null;
       if (!updates.parent_salon_name) updates.parent_salon_name = null;
       const { error } = await supabase.from("stores").update(updates).eq("id", store.id);
@@ -61,6 +77,10 @@ export default function StoreEditModal({ store, onClose, onUpdate }: StoreEditMo
           <div>
             <label className="text-xs text-muted-foreground">店名</label>
             <input className="w-full py-1.5 px-2 text-xs bg-transparent border border-border rounded-lg" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">分店名稱（選填）</label>
+            <input className="w-full py-1.5 px-2 text-xs bg-transparent border border-border rounded-lg" value={form.branch_name} onChange={e => setForm({...form, branch_name: e.target.value})} placeholder="例：一中店" />
           </div>
           <div>
             <label className="text-xs text-muted-foreground">IG 帳號</label>

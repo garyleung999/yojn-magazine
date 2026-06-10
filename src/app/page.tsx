@@ -10,7 +10,6 @@ import {
   SalonCard,
   SalonCardList,
   SalonCardGrid,
-  DetailView,
 } from "@/components/StoreCard";
 import SubmitView from "@/components/SubmissionForm";
 import AuthModal from "@/components/AuthModal";
@@ -65,6 +64,8 @@ interface StoreRow {
   voted_by_aesthetic?: string[];
   voted_by_service?: string[];
   created_at?: string;
+  branch_name?: string;
+  slug: string;
 }
 
 
@@ -141,6 +142,8 @@ function mapStore(row: StoreRow): Store {
     voted_by_aesthetic: row.voted_by_aesthetic ?? [],
     voted_by_service: row.voted_by_service ?? [],
     created_at: row.created_at ?? '',
+    branch_name: row.branch_name ?? undefined,
+    slug: row.slug ?? (row.name.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-+|-+$/g, '') || row.ig_username.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-+|-+$/g, '')),
   };
 }
 
@@ -217,20 +220,17 @@ function matchesBudgetFilter(store: Store, budgetTags: string[]): boolean {
 function HomePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const storeParam = searchParams.get('store');
   const submitParam = searchParams.get('submit');
 
-  const [currentView, setCurrentView] = useState<"home" | "detail" | "submit">(
-    storeParam ? "detail" : submitParam === 'true' ? "submit" : "home"
+  const [currentView, setCurrentView] = useState<"home" | "submit">(
+    submitParam === 'true' ? "submit" : "home"
   );
-  const [selectedStoreId, setSelectedStoreId] = useState<string | null>(storeParam);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [selectedArea, setSelectedArea] = useState("台中市");
   const [selectedSort, setSelectedSort] = useState("🏆 推薦排序");
 
   const [stores, setStores] = useState<Store[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -238,9 +238,8 @@ function HomePageContent() {
     setIsLoading(true);
     setError(null);
     try {
-      const [storesResult, reviewsResult, tagVotesResult] = await Promise.all([
+      const [storesResult, tagVotesResult] = await Promise.all([
         supabase.from("stores").select("*, store_specialties(*)"),
-        supabase.from("reviews").select("*"),
         supabase.from("tag_votes").select("store_id, tag_name"),
       ]);
 
@@ -265,17 +264,8 @@ function HomePageContent() {
         return store;
       });
       setStores(mappedStores);
-
-      if (reviewsResult.error) {
-        throw reviewsResult.error;
-      }
-      const mappedReviews = (reviewsResult.data ?? []).map((row: any) =>
-        mapReview(row as ReviewRow)
-      );
-      setReviews(mappedReviews);
     } catch (err: any) {
       console.error("Error fetching data:", err);
-      // Provide a user-friendly error message
       if (err?.name === "AbortError") {
         setError("連線逾時，請確認網路連線後重新整理。");
       } else if (err?.message?.includes("Failed to fetch") || err?.message?.includes("NetworkError")) {
@@ -291,9 +281,6 @@ function HomePageContent() {
   useEffect(() => {
     fetchData();
 
-    // Safety timeout: force loading to end after 8 seconds
-    // Prevents the page from being permanently stuck if data fetching hangs
-    // (e.g., network unreachable but no error thrown, or request never resolves)
     const safetyTimeout = setTimeout(() => {
       setIsLoading((prev) => {
         if (prev) {
@@ -308,41 +295,14 @@ function HomePageContent() {
     return () => clearTimeout(safetyTimeout);
   }, [fetchData]);
 
-  // Listen for searchParams changes (client-side route changes via router.push)
+  // Listen for submit param changes
   useEffect(() => {
-    if (storeParam) {
-      setCurrentView("detail");
-      setSelectedStoreId(storeParam);
-    } else if (submitParam === 'true') {
+    if (submitParam === 'true') {
       setCurrentView("submit");
-      setSelectedStoreId(null);
     } else {
       setCurrentView("home");
-      setSelectedStoreId(null);
     }
-  }, [storeParam, submitParam]);
-
-  // Listen for browser back/forward navigation (popstate)
-  useEffect(() => {
-    const handlePopState = () => {
-      const url = new URL(window.location.href);
-      const store = url.searchParams.get('store');
-      const submit = url.searchParams.get('submit');
-      if (store) {
-        setCurrentView("detail");
-        setSelectedStoreId(store);
-      } else if (submit === 'true') {
-        setCurrentView("submit");
-      } else {
-        setCurrentView("home");
-        setSelectedStoreId(null);
-      }
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-
+  }, [submitParam]);
 
   // Separate budget tags from regular tags
   const budgetTags = useMemo(
@@ -365,7 +325,9 @@ function HomePageContent() {
         store.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         store.ig_username.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (store.parent_salon_ig && store.parent_salon_ig.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        store.area.toLowerCase().includes(searchQuery.toLowerCase());
+        store.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (store.branch_name && store.branch_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        store.slug.toLowerCase().includes(searchQuery.toLowerCase());
 
       const storeTags = store.tags || [];
       const matchesFilters =
@@ -380,7 +342,6 @@ function HomePageContent() {
     // Apply sorting
     switch (selectedSort) {
       case "🏆 推薦排序":
-        // 综合三维投票总分
         result.sort((a, b) => {
           const scoreA = (a.vote_skill ?? 0) + (a.vote_aesthetic ?? 0) + (a.vote_service ?? 0);
           const scoreB = (b.vote_skill ?? 0) + (b.vote_aesthetic ?? 0) + (b.vote_service ?? 0);
@@ -417,9 +378,6 @@ function HomePageContent() {
     return result;
   }, [stores, searchQuery, regularTags, budgetTags, selectedSort]);
 
-  const selectedStore = stores.find((s) => s.id === selectedStoreId);
-  const storeReviews = reviews.filter((r) => r.store_id === selectedStoreId);
-
   const toggleFilter = (tag: string) => {
     setActiveFilters((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
@@ -430,36 +388,11 @@ function HomePageContent() {
     setActiveFilters([]);
   };
 
-  const handleStoreClick = (storeId: string) => {
-    router.push(`/?store=${storeId}`);
-  };
-
-  const handleBack = () => {
-    router.push('/');
-  };
-
-  const handleInstagramClick = (igUsername: string) => {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if (isMobile) {
-      // 手機版：嘗試開啟 IG App，2 秒後降級到網頁版
-      const deepLink = `instagram://user?username=${igUsername}`;
-      const webFallback = `https://instagram.com/${igUsername}`;
-      const startTime = Date.now();
-      window.location.href = deepLink;
-      setTimeout(() => {
-        // 如果 App 沒打開（還在原頁面），跳轉網頁版
-        if (Date.now() - startTime < 2500) {
-          window.open(webFallback, '_blank');
-        }
-      }, 2000);
-    } else {
-      // 桌面版：強制開新分頁
-      window.open(`https://instagram.com/${igUsername}`, '_blank', 'noopener,noreferrer');
-    }
+  const handleStoreClick = (storeSlug: string) => {
+    router.push(`/store/${storeSlug}`);
   };
 
   const handleParentSalonClick = (parentIg: string) => {
-    // Filter stores by parent_salon_ig
     setSearchQuery(parentIg);
     router.push('/');
   };
@@ -468,13 +401,14 @@ function HomePageContent() {
     setStores((prev) => [...prev, newStore]);
   };
 
-  const handleAddReview = (newReview: Review) => {
-    setReviews((prev) => [newReview, ...prev]);
-  };
-
-  // Handle duplicate redirect from SubmitView
+  // Handle duplicate redirect from SubmitView — redirect to slug page
   const handleDuplicateRedirect = (storeId: string) => {
-    router.push(`/?store=${storeId}`);
+    const store = stores.find((s) => s.id === storeId);
+    if (store?.slug) {
+      router.push(`/store/${store.slug}`);
+    } else {
+      router.push('/');
+    }
   };
 
   if (isLoading) {
@@ -491,7 +425,6 @@ function HomePageContent() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-6">
         <div className="text-center max-w-sm">
-          {/* Error Icon */}
           <div className="w-16 h-16 mx-auto mb-5 rounded-full bg-destructive/10 flex items-center justify-center">
             <svg
               className="w-8 h-8 text-destructive"
@@ -507,30 +440,14 @@ function HomePageContent() {
               />
             </svg>
           </div>
-          {/* Error Message */}
-          <h2 className="font-serif text-lg mb-3 text-foreground">
-            載入失敗
-          </h2>
-          <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-            {error}
-          </p>
-          {/* Retry Button */}
+          <h2 className="font-serif text-lg mb-3 text-foreground">載入失敗</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed mb-6">{error}</p>
           <button
             onClick={fetchData}
             className="inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background rounded-xl text-sm font-medium hover:opacity-90 transition-opacity shadow-lg active:scale-[0.98]"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182"
-              />
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
             </svg>
             重新載入
           </button>
@@ -560,23 +477,9 @@ function HomePageContent() {
           />
         )}
 
-        {currentView === "detail" && selectedStore && (
-          <DetailView
-            store={selectedStore}
-            reviews={storeReviews}
-            onBack={handleBack}
-            onInstagramClick={handleInstagramClick}
-            onAddReview={handleAddReview}
-            onStoreUpdate={(updatedStore) => {
-              console.log('onStoreUpdate called, updatedStore image_urls:', updatedStore.image_urls);
-              setStores((prev) => prev.map((s) => (s.id === updatedStore.id ? updatedStore : s)));
-            }}
-              
-          />
-        )}
         {currentView === "submit" && (
           <SubmitView
-            onBack={handleBack}
+            onBack={() => router.push('/')}
             onSubmit={handleAddStore}
             stores={stores}
             onDuplicateRedirect={handleDuplicateRedirect}
@@ -834,7 +737,7 @@ function HomeView({
               <SalonCardList
                 key={store.id}
                 store={store}
-                onClick={() => onStoreClick(store.id)}
+                onClick={() => onStoreClick(store.slug)}
                 onParentSalonClick={(parentIg) => {
                   setSearchQuery(parentIg);
                 }}
@@ -843,7 +746,7 @@ function HomeView({
               <SalonCardGrid
                 key={store.id}
                 store={store}
-                onClick={() => onStoreClick(store.id)}
+                onClick={() => onStoreClick(store.slug)}
                 onParentSalonClick={(parentIg) => {
                   setSearchQuery(parentIg);
                 }}
@@ -852,7 +755,7 @@ function HomeView({
               <SalonCard
                 key={store.id}
                 store={store}
-                onClick={() => onStoreClick(store.id)}
+                onClick={() => onStoreClick(store.slug)}
                 onParentSalonClick={(parentIg) => {
                   setSearchQuery(parentIg);
                 }}

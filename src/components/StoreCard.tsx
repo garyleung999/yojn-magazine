@@ -84,7 +84,10 @@ export function SalonCard({ store, onClick, onParentSalonClick }: SalonCardProps
 
       <div className="p-3 flex flex-col flex-1">
         <div className="flex items-start justify-between mb-1">
-          <h3 className="font-serif text-lg sm:text-xl font-semibold">{store.name}</h3>
+          <h3 className="font-serif text-lg sm:text-xl font-semibold">
+            {store.name}
+            {store.branch_name ? <span className="text-sm text-muted-foreground font-normal ml-1">({store.branch_name})</span> : ''}
+          </h3>
           <Bookmark className="w-4 h-4 text-muted-foreground flex-shrink-0" />
         </div>
 
@@ -165,7 +168,10 @@ export function SalonCardList({ store, onClick, onParentSalonClick }: SalonCardP
       <div className="flex flex-col gap-1">
         {/* 第一行：店名 + 區域 */}
         <div className="flex items-center gap-2">
-          <h3 className="font-serif text-sm font-semibold">{store.name}</h3>
+          <h3 className="font-serif text-sm font-semibold">
+            {store.name}
+            {store.branch_name ? <span className="text-xs text-muted-foreground font-normal ml-1">({store.branch_name})</span> : ''}
+          </h3>
           <span className="text-xs text-muted-foreground flex-shrink-0 px-2 py-0.5 bg-secondary rounded">
             {store.area}
           </span>
@@ -265,7 +271,10 @@ export function SalonCardGrid({ store, onClick, onParentSalonClick }: SalonCardP
         </div>
       )}
       <div className="p-2 flex flex-col flex-1">
-        <h3 className="font-serif text-xs mb-0.5 truncate">{store.name}</h3>
+        <h3 className="font-serif text-xs mb-0.5 truncate">
+          {store.name}
+          {store.branch_name ? <span className="text-[10px] text-muted-foreground font-normal ml-0.5">({store.branch_name})</span> : ''}
+        </h3>
         {store.parent_salon_ig && (
           <button
             onClick={(e) => {
@@ -1528,6 +1537,9 @@ export function DetailView({
           <div>
             <div className="flex items-center gap-2 mb-0.5">
               <h2 className="font-serif text-lg">{store.name}</h2>
+              {store.branch_name && (
+                <span className="text-xs text-muted-foreground">📍 {store.branch_name}</span>
+              )}
               {store.is_official && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-foreground text-background rounded-full">
                   <ShieldCheck className="w-2.5 h-2.5" />

@@ -35,6 +35,7 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
     avg_duration_hours: "",
     is_returning: null as boolean | null,
     vibe_tag: "",
+    branch_name: "",
   });
 
   const [priceMenu, setPriceMenu] = useState<PriceMenuItem[]>(DEFAULT_PRICE_MENU);
@@ -80,6 +81,11 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
       const avgDuration = formData.avg_duration_hours ? parseFloat(formData.avg_duration_hours) : null;
       const vibeTag = formData.vibe_tag || "待驗證";
 
+      // Generate slug from name + branch_name
+      const rawName = formData.name || formData.ig_username.replace('@','');
+      const branchPart = formData.branch_name ? '-' + formData.branch_name.trim() : '';
+      const slug = (rawName + branchPart).toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-+|-+$/g, '');
+
       // 1. Insert store
       const { data: newStore, error: storeError } = await supabase
         .from("stores")
@@ -94,6 +100,8 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
           tags: [],
           image_urls: formData.image_urls.length > 0 ? formData.image_urls : null,
           price_menu: priceMenu,
+          branch_name: formData.branch_name || null,
+          slug,
         })
         .select("id")
         .single();
@@ -115,6 +123,8 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
         tags: [],
         image_urls: formData.image_urls.length > 0 ? formData.image_urls : undefined,
         price_menu: priceMenu,
+        branch_name: formData.branch_name || undefined,
+        slug,
       };
 
 
@@ -205,6 +215,22 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
                 }))
               }
               placeholder="@example_nail"
+              className="w-full py-2.5 text-sm bg-transparent border-b border-border focus:border-foreground focus:outline-none transition-colors"
+            />
+          </div>
+
+          {/* Branch Name */}
+          <div>
+            <label className="text-xs text-muted-foreground mb-1.5 block">
+              分店名稱 (選填)
+            </label>
+            <input
+              type="text"
+              value={formData.branch_name}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, branch_name: e.target.value }))
+              }
+              placeholder="例：一中店"
               className="w-full py-2.5 text-sm bg-transparent border-b border-border focus:border-foreground focus:outline-none transition-colors"
             />
           </div>

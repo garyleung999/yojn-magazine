@@ -39,6 +39,9 @@ export interface Store {
   returning_rate?: number;
   top_tags?: string[]; // Top 3 most voted tags from tag_votes
   created_at?: string; // ISO timestamp of store creation/registration
+  // Multi-branch fields
+  branch_name?: string; // Branch name for multi-store management (e.g., "一中店")
+  slug: string; // URL-friendly slug for routing (e.g., "91nails___-一中店")
 }
 
 export interface Review {
@@ -252,6 +255,7 @@ export const mockStores: Store[] = [
     ],
     calculated_avg_price: 1350,
     manicurists: ["Amber", "Vivi"],
+    slug: "nuance",
   },
   {
     id: "550e8400-e29b-41d4-a716-446655440002",
@@ -269,6 +273,7 @@ export const mockStores: Store[] = [
     tags: ["韓系簡約", "純色", "方圓形", "職場低調", "I人友善(不尬聊)"],
     calculated_avg_price: 1200,
     manicurists: ["Lynn"],
+    slug: "le-blanc-nail",
   },
   {
     id: "550e8400-e29b-41d4-a716-446655440003",
@@ -286,6 +291,7 @@ export const mockStores: Store[] = [
     tags: ["日系細膩", "精細手繪", "芭蕾梯形", "婚甲訂製", "不分款到好"],
     calculated_avg_price: 1800,
     manicurists: ["Sara", "Mia"],
+    slug: "studio-s",
   },
   {
     id: "550e8400-e29b-41d4-a716-446655440004",
@@ -303,6 +309,7 @@ export const mockStores: Store[] = [
     tags: ["韓系簡約", "漸變", "橢圓形", "問題指甲矯正", "絕不強迫推銷"],
     calculated_avg_price: 1100,
     manicurists: ["Chen"],
+    slug: "lian-nail",
   },
   {
     id: "550e8400-e29b-41d4-a716-446655440005",
@@ -320,6 +327,7 @@ export const mockStores: Store[] = [
     tags: ["歐美大膽", "魔鏡金屬", "修長尖形", "E人天堂(好聊)", "加建構不加價"],
     calculated_avg_price: 1600,
     manicurists: ["Nora"],
+    slug: "noir",
   },
   {
     id: "550e8400-e29b-41d4-a716-446655440006",
@@ -337,6 +345,7 @@ export const mockStores: Store[] = [
     tags: ["日系細膩", "3D立體", "經典方形", "問題指甲矯正", "加建構不加價"],
     calculated_avg_price: 1400,
     manicurists: ["Ivy"],
+    slug: "im-nail",
   },
   {
     id: "550e8400-e29b-41d4-a716-446655440007",
@@ -354,6 +363,7 @@ export const mockStores: Store[] = [
     tags: ["中式古典", "金箔箔紙", "優雅杏仁", "婚甲訂製", "不分款到好"],
     calculated_avg_price: 2200,
     manicurists: ["Mona"],
+    slug: "m-nail-atelier",
   },
   {
     id: "550e8400-e29b-41d4-a716-446655440008",
@@ -371,6 +381,7 @@ export const mockStores: Store[] = [
     tags: ["韓系簡約", "純色", "橢圓形", "孕婦兒童友善", "絕不強迫推銷"],
     calculated_avg_price: 1000,
     manicurists: ["Lin"],
+    slug: "line-nail",
   },
   {
     id: "550e8400-e29b-41d4-a716-446655440009",
@@ -388,6 +399,7 @@ export const mockStores: Store[] = [
     tags: ["日系細膩", "漸變", "方圓形", "出國度假長效", "I人友善(不尬聊)"],
     calculated_avg_price: 1300,
     manicurists: ["Yuki"],
+    slug: "shiro",
   },
 ];
 
