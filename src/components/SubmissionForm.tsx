@@ -86,6 +86,17 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
       const branchPart = formData.branch_name ? '-' + formData.branch_name.trim() : '';
       const slug = (rawName + branchPart).toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-+|-+$/g, '');
 
+      // Extract single_color_price from priceMenu
+      let singleColorPrice: number | null = null;
+      const foundationCat = priceMenu.find(c => c.category === '基礎');
+      if (foundationCat) {
+        const singleItem = foundationCat.items.find(i => i.name.includes('單色') || i.name === '單色 / 雙色跳色');
+        if (singleItem?.price) {
+          const parsed = parseInt(singleItem.price);
+          if (!isNaN(parsed)) singleColorPrice = parsed;
+        }
+      }
+
       // 1. Insert store
       const { data: newStore, error: storeError } = await supabase
         .from("stores")
@@ -100,6 +111,7 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
           tags: [],
           image_urls: formData.image_urls.length > 0 ? formData.image_urls : null,
           price_menu: priceMenu,
+          single_color_price: singleColorPrice,
           branch_name: formData.branch_name || null,
           slug,
         })
@@ -123,6 +135,8 @@ export default function SubmitView({ onBack, onSubmit, stores, onDuplicateRedire
         tags: [],
         image_urls: formData.image_urls.length > 0 ? formData.image_urls : undefined,
         price_menu: priceMenu,
+        menu_updated_at: new Date().toISOString(),
+        single_color_price: singleColorPrice ?? undefined,
         branch_name: formData.branch_name || undefined,
         slug,
       };

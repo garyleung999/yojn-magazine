@@ -1686,6 +1686,7 @@ export function DetailView({
               menu={localPriceMenu}
               menuUpdatedAt={localMenuUpdatedAt}
               storeId={store.id}
+              singleColorPrice={store.single_color_price}
               onMenuUpdate={async (newMenu) => {
                 // 1. 先乐观更新本地状态
                 setLocalPriceMenu(newMenu);

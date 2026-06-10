@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { PriceMenuItem } from "@/data/mockData";
 import { useAuth } from "@/context/AuthContext";
 import { Pencil, Clock } from "lucide-react";
@@ -34,6 +34,7 @@ interface NailPriceMenuProps {
   menu?: PriceMenuItem[];
   menuUpdatedAt?: string;
   storeId: string;
+  singleColorPrice?: number;
   onMenuUpdate?: (menu: PriceMenuItem[]) => void;
 }
 
@@ -41,6 +42,7 @@ export default function NailPriceMenu({
   menu,
   menuUpdatedAt,
   storeId,
+  singleColorPrice,
   onMenuUpdate,
 }: NailPriceMenuProps) {
   const [showEditModal, setShowEditModal] = useState(false);
@@ -49,7 +51,24 @@ export default function NailPriceMenu({
   );
   const { isAuthenticated } = useAuth();
 
-  const displayMenu = menu && menu.length > 0 ? menu : localMenu;
+  // When menu is empty/undefined, use the full default menu and fill in single_color_price if available
+  const effectiveMenu = useMemo(() => {
+    if (menu && menu.length > 0) return menu;
+    // Deep clone localMenu (which is DEFAULT_PRICE_MENU) to avoid mutation
+    const defaultMenu = JSON.parse(JSON.stringify(localMenu)) as PriceMenuItem[];
+    if (singleColorPrice != null) {
+      const foundationCat = defaultMenu.find(c => c.category === '基礎');
+      if (foundationCat) {
+        const singleItem = foundationCat.items.find(i => i.name.includes('單色'));
+        if (singleItem) {
+          singleItem.price = String(singleColorPrice);
+        }
+      }
+    }
+    return defaultMenu;
+  }, [menu, singleColorPrice, localMenu]);
+
+  const displayMenu = effectiveMenu;
 
   const handleSave = (newMenu: PriceMenuItem[]) => {
     setLocalMenu(newMenu);
