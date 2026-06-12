@@ -1429,7 +1429,7 @@ export function DetailView({
         <div className="flex items-center justify-between px-4 py-3">
           <button onClick={onBack} className="p-1"><ArrowLeft className="w-5 h-5" /></button>
           <div className="text-center">
-            <h1 className="font-serif text-base">YOJN Mégazine</h1>
+            <h1 className="font-serif text-base">YOJN Nail</h1>
             <p className="text-xs text-muted-foreground">台中 · 美業職人精選鏡</p>
           </div>
           <button className="p-1"><Share2 className="w-5 h-5" /></button>

@@ -197,7 +197,7 @@ export default function HomePage() {
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="font-serif text-xl text-muted-foreground animate-pulse">
-          YOJN Mégazine
+          YOJN Nail
         </div>
       </div>
     }>
@@ -415,7 +415,7 @@ function HomePageContent() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="font-serif text-xl text-muted-foreground animate-pulse">
-          YOJN Mégazine
+          YOJN Nail
         </div>
       </div>
     );
@@ -544,7 +544,7 @@ function HomeView({
           {/* 中间标题绝对居中 */}
           <div className="flex-1 text-center">
             <h1 className="font-serif text-lg tracking-tight">
-              YOJN Mégazine — 台中
+              YOJN Nail — 台中
             </h1>
             <p className="text-[12px] text-muted-foreground">美業職人交流平台</p>
           </div>
