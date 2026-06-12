@@ -92,7 +92,7 @@ export default function MerchantClaimModal({
           >
             <MessageCircle className="w-4 h-4 text-muted-foreground" />
             <span className="text-foreground">LINE 官方帳號</span>
-            <span className="ml-auto text-muted-foreground">@yojn_magazine</span>
+            <span className="ml-auto text-muted-foreground">建立中</span>
           </a>
           <a
             href="mailto:merchant@yojn.tw"
@@ -100,7 +100,7 @@ export default function MerchantClaimModal({
           >
             <Mail className="w-4 h-4 text-muted-foreground" />
             <span className="text-foreground">Email 聯繫</span>
-            <span className="ml-auto text-muted-foreground">merchant@yojn.tw</span>
+            <span className="ml-auto text-muted-foreground">yojnnail@gmail.com</span>
           </a>
         </div>
 
